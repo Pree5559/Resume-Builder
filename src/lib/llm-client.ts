@@ -42,8 +42,10 @@ function getGroq(): Groq {
   return _groq;
 }
 
-const DEFAULT_MODEL = "llama-3.3-70b-versatile";
-const FALLBACK_MODEL = "mixtral-8x7b-32768";
+// Fast models for Vercel Hobby plan (10s timeout)
+// llama-3.1-8b-instant is ~2s response time
+const DEFAULT_MODEL = "llama-3.1-8b-instant";
+const FALLBACK_MODEL = "llama-3.3-70b-versatile";
 const MAX_RETRIES = 2;
 
 async function sleep(ms: number): Promise<void> {
