@@ -62,19 +62,33 @@ export async function callLLM<T>({
   let lastError: Error | null = null;
   let currentModel = model;
 
+  // Models that support response_format: "json_object"
+  const jsonModeModels = new Set([
+    "llama-3.3-70b-versatile",
+    "mixtral-8x7b-32768",
+    "llama3-70b-8192",
+    "llama3-8b-8192",
+  ]);
+
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const groq = getGroq();
-      const response = await groq.chat.completions.create({
+      const requestOptions: Record<string, unknown> = {
         messages: [
           { role: "system", content: systemPrompt },
           { role: "user", content: userMessage },
         ],
         model: currentModel,
         temperature: 0.1,
-        max_tokens: 4096,
-        response_format: { type: "json_object" },
-      });
+        max_tokens: 8192,
+      };
+
+      // Only use JSON mode for supported models
+      if (jsonModeModels.has(currentModel)) {
+        requestOptions.response_format = { type: "json_object" };
+      }
+
+      const response = await groq.chat.completions.create(requestOptions);
 
       const content = response.choices[0]?.message?.content;
       if (!content) {
