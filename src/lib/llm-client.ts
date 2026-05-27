@@ -73,22 +73,26 @@ export async function callLLM<T>({
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
       const groq = getGroq();
-      const requestOptions: Record<string, unknown> = {
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userMessage },
-        ],
-        model: currentModel,
-        temperature: 0.1,
-        max_tokens: 8192,
-      };
+      const messages = [
+        { role: "system" as const, content: systemPrompt },
+        { role: "user" as const, content: userMessage },
+      ];
 
       // Only use JSON mode for supported models
-      if (jsonModeModels.has(currentModel)) {
-        requestOptions.response_format = { type: "json_object" };
-      }
-
-      const response = await groq.chat.completions.create(requestOptions);
+      const response = jsonModeModels.has(currentModel)
+        ? await groq.chat.completions.create({
+            messages,
+            model: currentModel,
+            temperature: 0.1,
+            max_tokens: 8192,
+            response_format: { type: "json_object" },
+          })
+        : await groq.chat.completions.create({
+            messages,
+            model: currentModel,
+            temperature: 0.1,
+            max_tokens: 8192,
+          });
 
       const content = response.choices[0]?.message?.content;
       if (!content) {
