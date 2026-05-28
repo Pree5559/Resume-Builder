@@ -4,6 +4,8 @@ import { analyzeGaps } from "@/lib/gap-analysis";
 import { ResumeProfileSchema, JobDescriptionProfileSchema } from "@/lib/schemas";
 import { LLMError } from "@/lib/llm-client";
 
+export const runtime = "nodejs";
+
 const requestSchema = z.object({
   resume: ResumeProfileSchema,
   jd: JobDescriptionProfileSchema,
@@ -28,7 +30,7 @@ export async function POST(request: NextRequest) {
         { status: 502 }
       );
     }
-    console.error("Gaps error:", error);
+    console.error({ route: "gaps", error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     return NextResponse.json(
       { error: "Internal server error", code: "INTERNAL_ERROR" },
       { status: 500 }

@@ -9,6 +9,8 @@ import {
 } from "@/lib/schemas";
 import { generateTailoredResumePDF, generateComparisonPDF } from "@/lib/pdf-generator";
 
+export const runtime = "nodejs";
+
 const ExportPDFRequestSchema = z.object({
   type: z.enum(["tailored", "comparison"]),
   resume: ResumeProfileSchema,
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("[PDF Export] Error:", error);
+    console.error({ route: "export-pdf", error: error instanceof Error ? error.message : String(error), stack: error instanceof Error ? error.stack : undefined });
     const message =
       error instanceof Error ? error.message : "Unknown error generating PDF";
     return NextResponse.json(

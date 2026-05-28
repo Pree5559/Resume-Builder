@@ -1,4 +1,3 @@
-import Groq from "groq-sdk";
 import { z } from "zod";
 
 export class LLMError extends Error {
@@ -27,16 +26,16 @@ interface LLMUsage {
 }
 
 // Lazy initialization to prevent build-time errors when GROQ_API_KEY is not set
-let _groq: Groq | null = null;
+let _groq: any = null;
 
-function getGroq(): Groq {
+async function getGroq(): Promise<any> {
   if (!_groq) {
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      throw new Error(
-        "The GROQ_API_KEY environment variable is missing or empty"
-      );
+      throw new Error("The GROQ_API_KEY environment variable is missing or empty");
     }
+    const mod = await import("groq-sdk");
+    const Groq = mod?.default ?? mod;
     _groq = new Groq({ apiKey });
   }
   return _groq;
@@ -72,7 +71,7 @@ export async function callLLM<T>({
 
   for (let attempt = 0; attempt <= maxRetries; attempt++) {
     try {
-      const groq = getGroq();
+      const groq = await getGroq();
       const messages = [
         { role: "system" as const, content: systemPrompt },
         { role: "user" as const, content: userMessage },
@@ -135,7 +134,9 @@ export async function callLLM<T>({
       lastError = error instanceof Error ? error : new Error(String(error));
 
       // Check if it's a rate limit error
-      if (error instanceof Groq.APIError && error.status === 429) {
+      // Rate limit detection: avoid instanceof checks across bundles
+      const errAny = error as any;
+      if ((errAny?.status === 429) || errAny?.name === "APIError") {
         const backoff = Math.pow(2, attempt) * 1000;
         console.log(
           `[LLM] Rate limited. Retrying in ${backoff}ms (attempt ${attempt + 1}/${maxRetries + 1})`

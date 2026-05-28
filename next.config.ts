@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   // Serverless function configuration for Vercel
-  serverExternalPackages: ["@react-pdf/renderer"],
+  serverExternalPackages: ["@react-pdf/renderer", "groq-sdk"],
   
   // Disable x-powered-by header
   poweredByHeader: false,
